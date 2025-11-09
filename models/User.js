@@ -32,11 +32,18 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    verificationToken: {
+      type: String,
+    },
     passwordResetCode: {
+      type: String,
+    },
+    passwordResetToken: {
       type: String,
     },
     passwordResetExpires: {
       type: Date,
+      default: null,
     },
     // Flag set after a user successfully verifies the reset code; required before password change
     passwordResetVerified: {

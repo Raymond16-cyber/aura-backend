@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import connectDB from "../configs/DBConfig.js";
 import cookieParser from "cookie-parser";
 import authRouter from "../routes/authRoute.js";
+import waitlistRouter from "../routes/waitlistRoute.js";
 
 // Connect to database
 connectDB();
@@ -30,5 +31,6 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api/auth", authRouter);
+app.use("/waitlist", waitlistRouter);
 
 export default app;

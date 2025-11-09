@@ -18,7 +18,6 @@ const createTransporter = () => {
   });
 };
 
-
 // emailTemplates.js
 
 export const getEmailTemplate = (type, data1, data2) => {
@@ -126,9 +125,6 @@ export const getEmailTemplate = (type, data1, data2) => {
 
               <a href="${data1.resetLink}" class="button">Reset Password</a>
 
-              <p style="font-size:14px; color:#555; word-break:break-all;">
-                ${data1.resetLink}
-              </p>
 
               <div class="footer">
                 If you didn’t make this request, ignore this email.
@@ -181,7 +177,9 @@ export const getEmailTemplate = (type, data1, data2) => {
                 It’s where growth becomes a lifestyle — calm, intentional, and consistent.
               </p>
 
-              <a href="${data1.loginLink}" class="button">Start Your Journey</a>
+              <a href="${
+                data1.verifyLink
+              }" class="button">Start Your Journey By Verifying Your Email First</a>
 
               <p>What can you do next?</p>
               <ul>
@@ -203,6 +201,48 @@ export const getEmailTemplate = (type, data1, data2) => {
         </body>
       </html>
       `;
+    // ✅ WAITLIST CONFIRMATION EMAIL (NEW)
+    case "waitlist":
+      return `
+      <!DOCTYPE html>
+      <html>
+        <head>${baseStyle}</head>
+        <body>
+          <div class="container">
+            <div class="content">
+              <div class="logo">Aura</div>
+              <h2>You're on the Waitlist ✨</h2>
+
+              <p>Hi ${data1.fullName || "there"},</p>
+              <p>
+                Thank you for joining the Aura waitlist — you're officially early!
+                You'll be among the first to access the app when we launch.
+              </p>
+
+              ${
+                data1.referralCode
+                  ? `<p>Your referral code:</p>
+                     <div class="token-box">${data1.referralCode}</div>
+                     <p>Share Aura with friends — the more people sign up using your code, the sooner you unlock early access.</p>`
+                  : `<p>Invite others and move up faster on the waitlist.</p>`
+              }
+
+              <a href="${data1.dashboardLink}" class="button">
+                View My Waitlist Position 🚀
+              </a>
+
+              <p style="margin-top: 18px;">We're building something meaningful:
+                <strong>growth without overwhelm.</strong>
+              </p>
+
+              <div class="footer">
+                © ${new Date().getFullYear()} Aura — calm daily growth.
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+      `;
 
     default:
       return `<p>No template type detected.</p>`;
@@ -211,7 +251,7 @@ export const getEmailTemplate = (type, data1, data2) => {
 
 // send welcome email upon registration
 // Send Welcome Email (Aura)
-export const sendWelcomeEmail = async (email, fullName, loginLink) => {
+export const sendWelcomeEmail = async (email, fullName, verifyLink) => {
   console.log("\n✨ Preparing to send WELCOME email...");
   console.log(`From: ${process.env.EMAIL_USER}`);
   console.log(`To: ${email}`);
@@ -228,8 +268,8 @@ export const sendWelcomeEmail = async (email, fullName, loginLink) => {
       from: `"Aura" <${process.env.EMAIL_FROM}>`,
       to: email,
       subject: `🎉 Welcome to Aura, ${fullName}!`,
-      html: getEmailTemplate("welcome", { fullName, loginLink }),
-      text: `Welcome to Aura, ${fullName}! Login here: ${loginLink}`,
+      html: getEmailTemplate("welcome", { fullName, verifyLink }),
+      text: `Welcome to Aura, ${fullName}! Verify Email here: ${verifyLink}`,
     };
 
     console.log("📨 Sending welcome email...");
@@ -242,9 +282,8 @@ export const sendWelcomeEmail = async (email, fullName, loginLink) => {
     return {
       success: true,
       messageId: info.messageId,
-      loginLink,
+      verifyLink,
     };
-
   } catch (error) {
     console.error("❌ Error sending WELCOME email.");
     console.error("Reason:", error.message);
@@ -252,12 +291,12 @@ export const sendWelcomeEmail = async (email, fullName, loginLink) => {
     // Fallback log for debugging or manual resend
     console.log("\n🔗 MANUAL LOGIN LINK:");
     console.log(`User: ${email}`);
-    console.log(`Login URL: ${loginLink}\n`);
+    console.log(`verify URL: ${verifyLink}\n`);
 
     return {
       success: false,
       fallback: true,
-      loginLink,
+      verifyLink,
       error: error.message,
     };
   }
@@ -276,12 +315,63 @@ export const sendVerificationEmail = async (
   await sendEmail(toEmail, "Verify Your Email ✨", emailContent);
 };
 
+// =============================
+// SEND PASSWORD RESET EMAIL
+// =============================
 export const sendPasswordResetEmail = async (toEmail, resetLink) => {
-  const emailContent = getEmailTemplate("password-reset", {
-    email: toEmail,
-    resetLink,
-  });
-  await sendEmail(toEmail, "Password Reset Request 🔒", emailContent);
+  console.log("\n🔐 Initiating password reset email...");
+  console.log(`Recipient: ${toEmail}`);
+  console.log(`From: ${process.env.EMAIL_FROM}`);
+
+  try {
+    const transporter = createTransporter();
+
+    console.log("🔍 Verifying SMTP connection...");
+    await transporter.verify();
+    console.log("✅ SMTP ready, connection verified.");
+
+    const emailContent = getEmailTemplate("password-reset", {
+      resetLink,
+      email: toEmail,
+    });
+
+    const mailOptions = {
+      from: `"Aura Support" <${process.env.EMAIL_FROM}>`,
+      to: toEmail,
+      subject: "🔒 Reset Your Password — Aura",
+      html: emailContent,
+      text: `You requested to reset your password.\n\nClick here: ${resetLink}\n\nIf you didn't request this, ignore this email.`,
+    };
+
+    console.log("📨 Sending reset email...");
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("✅ Password reset email sent successfully!");
+    console.log(`Message ID: ${info.messageId}`);
+    console.log(`Server response: ${info.response}`);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      resetLink,
+    };
+  } catch (error) {
+    console.error("❌ Failed to send password reset email.");
+    console.error("Error message:", error.message);
+    console.error("Error details:", error);
+
+    // fail-safe — still log reset link
+    console.log("\n⚠️ PASSWORD RESET LINK (manual fallback):");
+    console.log(`User: ${toEmail}`);
+    console.log(`Reset Link: ${resetLink}\n`);
+
+    return {
+      success: false,
+      error: error.message,
+      fallback: true,
+      resetLink,
+    };
+  }
 };
 
 export const sendPasswordResetSuccessEmail = async (toEmail, loginLink) => {
@@ -289,4 +379,62 @@ export const sendPasswordResetSuccessEmail = async (toEmail, loginLink) => {
     loginLink,
   });
   await sendEmail(toEmail, "Password Reset Successful ✅", emailContent);
+};
+
+// =============================
+// SEND WAITLIST CONFIRMATION EMAIL
+// =============================
+export const sendWaitlistConfirmationEmail = async (
+  email,
+  fullName,
+  referralCode,
+  dashboardLink
+) => {
+  console.log("\n🟣 Preparing WAITLIST confirmation email...");
+  console.log(`Recipient: ${email}`);
+
+  try {
+    const transporter = createTransporter();
+
+    console.log("🔍 Verifying transporter...");
+    await transporter.verify();
+    console.log("✅ Transporter verified.");
+
+    const emailContent = getEmailTemplate("waitlist", {
+      fullName,
+      referralCode,
+      dashboardLink,
+    });
+
+    const mailOptions = {
+      from: `"Aura" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: `You're on the Waitlist ✨`,
+      html: emailContent,
+      text: `You're officially on the Aura waitlist! Dashboard: ${dashboardLink}`,
+    };
+
+    console.log("📨 Sending waitlist email...");
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("✅ Waitlist confirmation email sent!");
+    console.log(`Message ID: ${info.messageId}`);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      referralCode,
+      dashboardLink,
+    };
+  } catch (error) {
+    console.error("❌ Failed to send waitlist confirmation email.");
+    console.error("Error:", error.message);
+
+    return {
+      success: false,
+      error: error.message,
+      referralCode,
+      dashboardLink,
+    };
+  }
 };

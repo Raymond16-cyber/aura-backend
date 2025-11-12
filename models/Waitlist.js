@@ -25,7 +25,10 @@ const WaitlistUserSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
-
+    referralLink: {
+      type: String,
+      unique: true,
+    },
     // how many people this user referred
     referralsCount: {
       type: Number,
@@ -48,16 +51,7 @@ const WaitlistUserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/**
- * Generate a referral code automatically when user is created.
- * Example: AURA-82JF93
- */
-WaitlistUserSchema.pre("save", function (next) {
-  if (!this.referralCode) {
-    this.referralCode = `AURA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-  }
-  next();
-});
+
 
 const Waitlist = mongoose.model("WaitlistUser", WaitlistUserSchema);
 export default Waitlist;

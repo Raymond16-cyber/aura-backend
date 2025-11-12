@@ -67,11 +67,12 @@ export const getEmailTemplate = (type, data1, data2) => {
         padding: 12px;
         border-radius: 8px;
         border: 1px solid #e9d5ff;
-        font-size: 18px;
+        font-size: 12px;
         font-weight: bold;
         text-align: center;
         letter-spacing: 2px;
         color: #6d28d9;
+      
       }
     </style>
   `;
@@ -234,7 +235,11 @@ export const getEmailTemplate = (type, data1, data2) => {
               <p style="margin-top: 18px;">We're building something meaningful:
                 <strong>growth without overwhelm.</strong>
               </p>
-
+              <p>Your referral link:</p>
+              <div class="token-box ">
+                ${data1.referralLink ? data1.referralLink : "No referral link"}
+              </div>
+              <p>Thank you for being part of our community from the start. Exciting times ahead!</p>
               <div class="footer">
                 © ${new Date().getFullYear()} Aura — calm daily growth.
               </div>
@@ -388,7 +393,8 @@ export const sendWaitlistConfirmationEmail = async (
   email,
   fullName,
   referralCode,
-  dashboardLink
+  dashboardLink,
+  referralLink
 ) => {
   console.log("\n🟣 Preparing WAITLIST confirmation email...");
   console.log(`Recipient: ${email}`);
@@ -404,6 +410,7 @@ export const sendWaitlistConfirmationEmail = async (
       fullName,
       referralCode,
       dashboardLink,
+      referralLink,
     });
 
     const mailOptions = {
@@ -438,3 +445,4 @@ export const sendWaitlistConfirmationEmail = async (
     };
   }
 };
+

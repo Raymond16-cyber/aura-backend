@@ -34,13 +34,19 @@ export const joinWaitlist = async (req, res) => {
       else console.log(`Referral code ${referralCode} not found`);
     }
 
+    // create user ref code
+    const refCode = `AURA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // create user referral link
+    const referralLink = refCode ? `${process.env.FRONTEND_URL}/waitlist/?ref=${refCode}` : null;
+    console.log("Referral link:", referralLink, refCode);
     // 4️⃣ Send confirmation email before saving
     const dashboardLink = process.env.FRONTEND_URL;
     const emailResponse = await sendWaitlistConfirmationEmail(
       email,
       name,
-      referralCode,
-      dashboardLink
+      refCode,
+      dashboardLink,
+      referralLink
     );
 
     if (!emailResponse.success) {
@@ -55,6 +61,8 @@ export const joinWaitlist = async (req, res) => {
       name,
       waitlistPosition: position,
       referredBy: referrerEmail,
+      referralCode: refCode,
+      referralLink: referralLink,
     });
     await newUser.save();
     console.log(`New user added to waitlist: ${email} at position ${position}`);

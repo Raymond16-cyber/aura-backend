@@ -76,6 +76,7 @@ export const joinWaitlist = async (req, res) => {
 
     return res.status(201).json({
       message: "Welcome! You're now on the waitlist 🚀",
+      success:"true",
       referralCode: newUser.referralCode,
       waitlistPosition: newUser.waitlistPosition,
     });

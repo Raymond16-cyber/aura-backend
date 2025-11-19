@@ -15,7 +15,7 @@ export const joinWaitlist = async (req, res) => {
     // 1️⃣ Check if user already exists
     const existingUser = await Waitlist.findOne({ email });
     if (existingUser) {
-      return res.status(200).json({
+      return res.status(400).json({
         error: "You are already on the waitlist.",
         referralCode: existingUser.referralCode,
         waitlistPosition: existingUser.waitlistPosition,

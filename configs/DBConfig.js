@@ -8,7 +8,7 @@ const connectDB = async () => {
     const conn = await mongoose.connect(
       process.env.NODE_ENV === "development"
         ? process.env.MONGO_URI
-        : MONGO_URL,
+        : process.env.MONGO_URL,
     );
 
     console.log(`🍃 MongoDB Connected: ${conn.connection.host}`);

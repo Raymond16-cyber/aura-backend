@@ -15,7 +15,7 @@ const app = express();
 app.use(
   cors({
     // origin: // Replace with frontend domain on production
-    origin: "https://aura-eight-pi.vercel.app",
+    origin: "http://localhost:5173/",
     credentials: true,
   })
 );

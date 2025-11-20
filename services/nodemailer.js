@@ -502,7 +502,7 @@ export const sendWaitlistFollowupEmail = async (
     const transporter = createTransporter();
     await transporter.verify();
 
-    const emailContent = getEmailTemplate("waitlist-followup", {
+    const emailContent = getEmailTemplate("waitlist-followup1", {
       fullName,
       referralCode,
       referralLink,

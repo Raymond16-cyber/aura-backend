@@ -248,6 +248,47 @@ export const getEmailTemplate = (type, data1, data2) => {
         </body>
       </html>
       `;
+    // ✅ WAITLIST DAY-1 FOLLOW-UP EMAIL
+    case "waitlist-followup1":
+      return `
+  <!DOCTYPE html>
+  <html>
+    <head>${baseStyle}</head>
+    <body>
+      <div class="container">
+        <div class="content">
+          <div class="logo">Aura</div>
+          <h2>Hi ${data1.fullName || "there"}, welcome to Aura! ✨</h2>
+
+          <p>
+            Thanks for joining the Aura waitlist! You're now part of a growing community focused on building micro-habits, tracking your emotions, and staying motivated—without pressure.
+          </p>
+
+          ${
+            data1.referralCode
+              ? `<p>Your referral code:</p>
+                 <div class="token-box">${data1.referralCode}</div>
+                 <p>Share it with friends to move up the waitlist and unlock exclusive early access rewards.</p>`
+              : `<p>Invite others and move up faster on the waitlist.</p>`
+          }
+
+          <p>🌟 Quick tip: Invite 3 friends today and you could jump ahead in line!</p>
+
+          <a href="${
+            data1.referralLink
+          }" class="button">Share My Referral Code</a>
+
+          <div class="footer">
+            Thanks for being part of the Aura community! We can't wait to see you grow.<br/>
+            Follow us on <a href="${
+              data1.socialLinks || "#"
+            }">social media</a> for tips and motivation.
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+  `;
 
     default:
       return `<p>No template type detected.</p>`;
@@ -446,3 +487,46 @@ export const sendWaitlistConfirmationEmail = async (
   }
 };
 
+// SEND FOLLOWUP EMAIL 1
+export const sendWaitlistFollowupEmail = async (
+  email,
+  fullName,
+  referralCode,
+  referralLink,
+  socialLinks
+) => {
+  console.log("\n💌 Preparing WAITLIST follow-up email...");
+  console.log(`Recipient: ${email}`);
+
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+
+    const emailContent = getEmailTemplate("waitlist-followup", {
+      fullName,
+      referralCode,
+      referralLink,
+      socialLinks,
+    });
+
+    const mailOptions = {
+      from: `"Aura" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: `Keep Growing with Aura 🌟`,
+      html: emailContent,
+      text: `Hi ${fullName}, thanks for joining Aura! Share your referral code to move up the waitlist: ${referralCode || referralLink}`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("✅ Waitlist follow-up email sent!");
+    console.log(`Message ID: ${info.messageId}`);
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("❌ Failed to send waitlist follow-up email.");
+    console.error("Error:", error.message);
+
+    return { success: false, error: error.message };
+  }
+};

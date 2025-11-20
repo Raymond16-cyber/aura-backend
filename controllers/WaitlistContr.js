@@ -1,5 +1,8 @@
 import Waitlist from "../models/Waitlist.js";
-import { sendWaitlistConfirmationEmail } from "../services/nodemailer.js";
+import {
+  sendWaitlistConfirmationEmail,
+  sendWaitlistFollowupEmail,
+} from "../services/nodemailer.js";
 
 // Join waitlist
 export const joinWaitlist = async (req, res) => {
@@ -35,9 +38,14 @@ export const joinWaitlist = async (req, res) => {
     }
 
     // create user ref code
-    const refCode = `AURA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const refCode = `AURA-${Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase()}`;
     // create user referral link
-    const referralLink = refCode ? `${process.env.FRONTEND_URL}/waitlist/?ref=${refCode}` : null;
+    const referralLink = refCode
+      ? `${process.env.FRONTEND_URL}/waitlist/?ref=${refCode}`
+      : null;
     console.log("Referral link:", referralLink, refCode);
     // 4️⃣ Send confirmation email before saving
     const dashboardLink = process.env.FRONTEND_URL;
@@ -51,7 +59,8 @@ export const joinWaitlist = async (req, res) => {
 
     if (!emailResponse.success) {
       return res.status(400).json({
-        error: "Unable to send confirmation email. Please check your email address.",
+        error:
+          "Unable to send confirmation email. Please check your email address.",
       });
     }
 
@@ -76,12 +85,57 @@ export const joinWaitlist = async (req, res) => {
 
     return res.status(201).json({
       message: "Welcome! You're now on the waitlist 🚀",
-      success:"true",
+      success: "true",
       referralCode: newUser.referralCode,
       waitlistPosition: newUser.waitlistPosition,
     });
   } catch (error) {
     console.error("Waitlist error:", error);
+    return res.status(500).json({ error: "Server error. Try again." });
+  }
+};
+
+// controller
+export const sendFollowUpEmailController = async (req, res) => {
+  try {
+    const socialLink = "https://www.linkedin.com/in/ikechukwu-r-9b2080336";
+
+    // timestamp for users registered at least 1 day ago
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // get only users created 24+ hours ago
+    const users = await Waitlist.find({
+      createdAt: { $lte: oneDayAgo },
+    });
+
+    console.log("Sending follow-up emails to waitlist users...");
+
+    for (const user of users) {
+      const emailResponse = await sendWaitlistFollowupEmail(
+        user.email,
+        user.name,
+        user.referralCode,
+        user.referralLink,
+        socialLink
+      );
+
+      if (emailResponse.success) {
+        console.log(`Follow-up email sent to ${user.email}`);
+
+        await user.save();
+      } else {
+        console.log(
+          `Failed to send follow-up email to ${user.email}: ${emailResponse.error}`
+        );
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Follow-up emails processed: ${users.length}`,
+    });
+  } catch (error) {
+    console.error("Follow-up email error:", error);
     return res.status(500).json({ error: "Server error. Try again." });
   }
 };

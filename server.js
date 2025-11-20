@@ -4,6 +4,7 @@ dotenv.config({
 });
 import http from "http";
 import app from "./app/app.js";
+import "./services/cron.js"
 
 const PORT = process.env.PORT || 4000;
 

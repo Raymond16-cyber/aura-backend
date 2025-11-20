@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { sendFollowUpEmailController } from "../controllers/WaitlistContr.js";
 
 // run daily at 12:00 AM
-cron.schedule("0 0 * * *", () => {
+cron.schedule("45 10 * * *", () => {
   console.log("⏰ Running daily follow-up email job...");
   sendFollowUpEmailController(
     {},

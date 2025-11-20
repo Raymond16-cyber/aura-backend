@@ -105,7 +105,7 @@ export const sendFollowUpEmailController = async (req, res) => {
 
     // get only users created 24+ hours ago
     const users = await Waitlist.find({
-      createdAt: { $lte: oneDayAgo },
+      createdAt: { $gte: oneDayAgo },
     });
 
     console.log("Sending follow-up emails to waitlist users...");
